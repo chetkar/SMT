@@ -256,6 +256,8 @@ out
 
 
 
+#######################################
+#Implements the SMT method for an Adjacency matrix
 ######
 smt_A <- function(A, K_m, method="1",alpha=0.05){
 
@@ -320,9 +322,8 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
   			      diag(Tmp) <- rep(0, n)
 
   			      mu        <- n*sum(A[ind,ind])/(n*(n-1))
-  			      #t1        <- n^(2/3)*max(eigs_sym(Tmp, 10)$values[2] - 2 - 1/(mu))
               t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-              #t1        <- n^(2/3)*max(irlba(Tmp,2,2, work=10)$d[2] - 2 - 1/(mu))
+
 
 
            }else{
@@ -331,9 +332,7 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
   			      diag(Tmp) <- rep(0,n)
 
   			      mu        <- n*sum(B[ind,ind])/(n*(n-1))
-  			      #t1        <- n^(2/3)*max(eigs_sym(Tmp,10)$values[2] - 2 - 1/(mu))
               t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-             #t1        <- n^(2/3)*max(irlba(Tmp,2, 2, work=20)$d[2] - 2 - 1/(mu))
 
   		  }
 
@@ -341,10 +340,6 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
       }
 
   		test.stat     <- max( tvec )
-
-      print(c(k, tvec))
-      print(Sys.time())
-
 
 
     if(!is.na(test.stat)){
@@ -1230,3 +1225,4 @@ out
 
 
 write.table(Power, "Power_new.csv", sep=",")
+
