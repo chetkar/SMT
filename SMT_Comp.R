@@ -258,7 +258,8 @@ out
 
 #######################################
 #Implements the SMT method for an Adjacency matrix
-######
+#We call this function when we have raw data A
+###########################################
 smt_A <- function(A, K_m, method="1",alpha=0.05){
 
     update.g <- TRUE
@@ -362,93 +363,9 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
 out
 }
 
-
-smt_only <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
-
-A      <- BlockModel.Gen(lambda=lambda, beta=Beta, n = N, K = K)$A
-alpha    <- 0.05
-res      <- 1
-update.g <- TRUE
-#############################
-# Sequential Test Procedure
-#############################
-
-
-for(k in 2:K_m){
-
- if(k ==1){
-    g <- rep(1, nrow(A))
- }else{
-    out    <- pl_est_com(A, K=k)
-    g      <- out$class
-
-    #out     <- reg.SP(A, K=k)
-    #g       <- out$cluster
-
-  }
-
-
-  if( sum(table(g) < 3) > 0 | length(table(g)) < k ){
-      upper_indx      <- 3*k
-      g[1:upper_indx] <- rep(seq(1,k, 1),3)
-  }
-
-  B.est <- matrix(0, k, k)
-  B.est  <- get.Best(A,g)
-
-  B.est  <- get.Best(A,g)
-  P.est  <- B.est[g,g]
-  ind    <- which( P.est < 10^(-30))
-  P.est[ind] <- 10^(-30)
-
-  tvec      <- rep(0, k)
-
-  B         <- 1 - A
-  diag(B)   <- rep(0, nrow(A))
-
-  for(l in 1:k){
-
-    ind       <- which(g==l)
-    n         <- length(ind)
-    P.tmp     <- P.est[ind, ind][1]
-
-    Tmp       <- A[ind, ind]/( sqrt( (n)* P.tmp*(1- P.tmp) ))
-    diag(Tmp) <- rep(0, length(ind))
-
-    mu        <- n*sum(A[ind,ind])/(n*(n-1))
-    t1        <- n^(2/3)*max(eigs_sym(Tmp,2)$values[2] - 2 - 1/(mu))
-
-    Tmp       <- (B[ind, ind])/( sqrt( (n)* P.tmp*(1- P.tmp) ))
-    diag(Tmp) <- rep(0, length(ind))
-
-    mu        <- n*sum(B[ind,ind])/(n*(n-1))
-    t2        <- n^(2/3)*max(eigs_sym(Tmp,2)$values[2] - 2 - 1/(mu))
-
-    tvec[l]   <- max(t1, t2)
-  }
-
-  test.stat     <- max( tvec )
-
-  if(!is.na(test.stat)){
-
-    if( test.stat <= qtw(1-alpha/(2*k)) & update.g == TRUE ){
-
-       res       <- k
-       update.g  = FALSE
-       break
-      }
-  }
-
-}
-
-h.out   <- unlist(res)[1]
-
-h.out
-}
-
-
-
-######
+########################################
+#Running Large Experiments here
+###########################################
 smt_large <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
 
 
@@ -464,6 +381,111 @@ smt_large <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
 
 ans
 }
+
+###############################################
+# Used for assessing the performance of SMT
+################################################
+smt_only <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
+
+	A      <- BlockModel.Gen(lambda=lambda, beta=Beta, n = N, K = K)$A
+	
+    alpha    <- 0.05
+	res      <- 1
+	update.g <- TRUE
+	#############################
+	# Sequential Test Procedure
+	#############################
+
+	for(k in 2:K_m){
+
+   if(k ==1){
+      g <- rep(1, nrow(A))
+   }else{
+		  out    <- pl_est_com(A, K=k, max.iter=100)
+		  g      <- out$class
+      #out     <- reg.SP(A, K=k)
+      #g       <- out$cluster
+
+    }
+
+    if( sum(table(g) < 3) > 0 | length(table(g)) < k ){
+      upper_indx      <- 3*k
+      g[1:upper_indx] <- rep(seq(1,k, 1),3)
+    }
+
+    B.est <- matrix(0, k, k)
+    B.est  <- get.Best(A,g)
+
+		P.est  <- B.est[g,g]
+		ind    <- which( P.est < 10^(-30))
+		P.est[ind] <- 10^(-30)
+
+		tvec      <- rep(0, k)
+
+		B         <- 1 - A
+		diag(B)   <- rep(0, nrow(A))
+    
+		for(l in 1:k){
+
+      		ind       <- which(g==l)
+      		n         <- length(ind)
+      		P.tmp     <- B.est[l,l]
+
+      if(P.tmp <= 0.5 ){
+
+        if(P.tmp < 0){
+
+           t1 <- 0
+
+          }else{
+
+            Tmp       <- A[ind, ind]/( sqrt( (n)* P.tmp*(1- P.tmp) ))
+            diag(Tmp) <- rep(0, n)
+
+            mu        <- n*sum(A[ind,ind])/(n*(n-1))
+            t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
+
+            #t2 <- 0
+         }
+
+         }else{
+
+          if(P.tmp > 1){
+
+            t1 <- 0
+
+          }else{
+
+            Tmp       <- (B[ind, ind])/( sqrt( (n)* P.tmp*(1- P.tmp) ))
+            diag(Tmp) <- rep(0,n)
+
+            mu        <- n*sum(B[ind,ind])/(n*(n-1))
+            t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
+          }
+      }
+
+    tvec[l]   <- t1
+    }
+
+    test.stat     <- max( tvec )
+
+    if(!is.na(test.stat)){
+
+      if( test.stat <= qtw(1-alpha/(k)) & update.g == TRUE ){
+
+			   res       <- k
+			   update.g  = FALSE
+			   break
+		    }
+    }
+
+	}
+
+	out   <- unlist(res)[1]
+
+out
+}
+
 
 
 
@@ -589,9 +611,7 @@ smt <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
             diag(Tmp) <- rep(0, n)
 
             mu        <- n*sum(A[ind,ind])/(n*(n-1))
-            #t1        <- n^(2/3)*max(eigs_sym(Tmp, 10)$values[2] - 2 - 1/(mu))
             t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-            #t1        <- n^(2/3)*max(irlba(Tmp,2,2, work=10)$d[2] - 2 - 1/(mu))
 
             #t2 <- 0
          }
@@ -608,9 +628,7 @@ smt <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
             diag(Tmp) <- rep(0,n)
 
             mu        <- n*sum(B[ind,ind])/(n*(n-1))
-            #t1        <- n^(2/3)*max(eigs_sym(Tmp,10)$values[2] - 2 - 1/(mu))
            t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-           #t1        <- n^(2/3)*max(irlba(Tmp,2, 2, work=20)$d[2] - 2 - 1/(mu))
           }
       }
 
@@ -673,9 +691,7 @@ smt <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
            diag(Tmp) <- rep(0, n)
 
            mu        <- n*sum(A[ind,ind])/(n*(n-1))
-           #t1        <- n^(2/3)*max(eigs_sym(Tmp, 10)$values[2] - 2 - 1/(mu))
            t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-           #t1        <- n^(2/3)*max(irlba(Tmp,2,2, work=10)$d[2] - 2 - 1/(mu))
 
            #t2 <- 0
         }
@@ -692,9 +708,7 @@ smt <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
            diag(Tmp) <- rep(0,n)
 
            mu        <- n*sum(B[ind,ind])/(n*(n-1))
-           #t1        <- n^(2/3)*max(eigs_sym(Tmp,10)$values[2] - 2 - 1/(mu))
           t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-          #t1        <- n^(2/3)*max(irlba(Tmp,2, 2, work=20)$d[2] - 2 - 1/(mu))
          }
      }
 
@@ -762,11 +776,7 @@ smt <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
             diag(Tmp) <- rep(0, n)
 
             mu        <- n*sum(A[ind,ind])/(n*(n-1))
-            #t1        <- n^(2/3)*max(eigs_sym(Tmp, 10)$values[2] - 2 - 1/(mu))
             t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-            #t1        <- n^(2/3)*max(irlba(Tmp,2,2, work=10)$d[2] - 2 - 1/(mu))
-
-            #t2 <- 0
          }
 
          }else{
@@ -781,9 +791,7 @@ smt <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
             diag(Tmp) <- rep(0,n)
 
             mu        <- n*sum(B[ind,ind])/(n*(n-1))
-            #t1        <- n^(2/3)*max(eigs_sym(Tmp,10)$values[2] - 2 - 1/(mu))
            t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-           #t1        <- n^(2/3)*max(irlba(Tmp,2, 2, work=20)$d[2] - 2 - 1/(mu))
           }
       }
 
@@ -850,11 +858,8 @@ smt <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
            diag(Tmp) <- rep(0, n)
 
            mu        <- n*sum(A[ind,ind])/(n*(n-1))
-           #t1        <- n^(2/3)*max(eigs_sym(Tmp, 10)$values[2] - 2 - 1/(mu))
            t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-           #t1        <- n^(2/3)*max(irlba(Tmp,2,2, work=10)$d[2] - 2 - 1/(mu))
 
-           #t2 <- 0
         }
 
         }else{
@@ -869,9 +874,7 @@ smt <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
            diag(Tmp) <- rep(0,n)
 
            mu        <- n*sum(B[ind,ind])/(n*(n-1))
-           #t1        <- n^(2/3)*max(eigs_sym(Tmp,10)$values[2] - 2 - 1/(mu))
           t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-          #t1        <- n^(2/3)*max(irlba(Tmp,2, 2, work=20)$d[2] - 2 - 1/(mu))
          }
      }
 
@@ -1225,4 +1228,5 @@ out
 
 
 write.table(Power, "Power_new.csv", sep=",")
+
 
