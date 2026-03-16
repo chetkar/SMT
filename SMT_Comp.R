@@ -368,16 +368,117 @@ out
 ###########################################
 smt_large <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
 
-
-	A      <- BlockModel.Gen(lambda=lambda, beta=Beta, n = N, K = K)$A
+	obj  <- BlockModel.Gen(lambda=lambda, beta=Beta, n = N, K = K)
+	A    <- obj$A
+	g.orig <- obj$g
 
 	a.out  <- unlist(BHMC.estimate(A, K_m)$K)[1]
+	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
+	ARI.a  <- adjustedRandIndex(g.orig, g)
 
   B      <- Matrix(A, sparse = TRUE)
-  f.out  <- eigcv(B, k_max=K_m)[1]
+  f.out  <- unlist(eigcv(B, k_max=K_m)[1])
+  g      <- pl_est_com(A, K=a.out, max.iter=100)$class
+  ARI.f  <- adjustedRandIndex(g.orig, g)
+  
+	alpha    <- 0.05
+	res      <- 1
+	update.g <- TRUE
+	#############################
+	# Sequential Test Procedure
+	#############################
 
-	ans 	<- c( a.out, f.out)
-  ans   <- unlist(ans)
+	for(k in 2:K_m){
+
+   if(k ==1){
+      g <- rep(1, nrow(A))
+   }else{
+		  out    <- pl_est_com(A, K=k, max.iter=100)
+		  g      <- out$class
+      #out     <- reg.SP(A, K=k)
+      #g       <- out$cluster
+
+    }
+
+    if( sum(table(g) < 3) > 0 | length(table(g)) < k ){
+      upper_indx      <- 3*k
+      g[1:upper_indx] <- rep(seq(1,k, 1),3)
+    }
+
+    B.est <- matrix(0, k, k)
+    B.est  <- get.Best(A,g)
+
+		P.est  <- B.est[g,g]
+		ind    <- which( P.est < 10^(-30))
+		P.est[ind] <- 10^(-30)
+
+		tvec      <- rep(0, k)
+
+		B         <- 1 - A
+		diag(B)   <- rep(0, nrow(A))
+    
+		for(l in 1:k){
+
+      		ind       <- which(g==l)
+      		n         <- length(ind)
+      		P.tmp     <- B.est[l,l]
+
+      if(P.tmp <= 0.5 ){
+
+        if(P.tmp < 0){
+
+           t1 <- 0
+
+          }else{
+
+            Tmp       <- A[ind, ind]/( sqrt( (n)* P.tmp*(1- P.tmp) ))
+            diag(Tmp) <- rep(0, n)
+
+            mu        <- n*sum(A[ind,ind])/(n*(n-1))
+            t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
+
+            #t2 <- 0
+         }
+
+         }else{
+
+          if(P.tmp > 1){
+
+            t1 <- 0
+
+          }else{
+
+            Tmp       <- (B[ind, ind])/( sqrt( (n)* P.tmp*(1- P.tmp) ))
+            diag(Tmp) <- rep(0,n)
+
+            mu        <- n*sum(B[ind,ind])/(n*(n-1))
+            t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
+          }
+      }
+
+    tvec[l]   <- t1
+    }
+
+    test.stat     <- max( tvec )
+
+    if(!is.na(test.stat)){
+
+      if( test.stat <= qtw(1-alpha/(k)) & update.g == TRUE ){
+
+			   res       <- k
+			   update.g  = FALSE
+			   break
+		    }
+    }
+
+	}
+
+	out.s   <- unlist(res)[1]
+	ARI.s  <- adjustedRandIndex(g.orig, g)
+	
+	ans   <- list()
+	ans$K <- c(a.out, f.out, out.s)
+	ans$ARI <- c(ARI.a, ARI.f, ARI.s)
 
 ans
 }
@@ -991,6 +1092,7 @@ library(randnet)
 library(RMTstat)
 library(multiviewtest)
 library(irlba)
+library(gdim)
 
 
 
@@ -1001,12 +1103,12 @@ library(irlba)
 		Beta      <- Beta.vec[sc]
 
 		alpha      <- 0.05
-		m          <- 100
+		m          <- 10
 		k_rep      <- rep(K,m)
 
 
-		out     <- sapply(k_rep, smt_only, lambda, Beta, N = N, K_m = K_m, alpha)
-
+		out     <- sapply(k_rep, smt_large, lambda, Beta, N = N, K_m = K_m, alpha)
+	    out     <- apply(out, 1, prop.fn, K)
 
 out
 }
@@ -1089,13 +1191,13 @@ out
     lambda.vec <- rep( c(10, 20, 40, 80), 12)
 
 
-    Comp_1000 <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
+    Comp_1000_100 <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
         unitcomp(sc)
 
     stopCluster(cl)
     print(Sys.time())
 
-    write.table(Comp_1000, "Comparison_1000_bet_all_new.csv", sep=",")
+    write.table(Comp_1000_100, "Comparison_1000_100_bet_all_new.csv", sep=",")
 
 
 print(Sys.time())
@@ -1228,5 +1330,35 @@ out
 
 
 write.table(Power, "Power_new.csv", sep=",")
+
+
+
+    library(foreach)
+    library(doParallel)
+    no_cores <- 15
+    cl       <- makeCluster(no_cores)
+    registerDoParallel(cl)
+
+    library(RMTstat)
+    library(randnet)
+    library(kernlab)
+    library(multiviewtest)
+    #library(rARPACK)
+
+    N.vec      <- rep(c(1000), each=30)
+    K_m.vec    <- rep(c(10), each=30)
+    K.vec      <- rep( c(3, 4, 5, 6, 7, 8), 5)
+    Beta.vec   <- c( rep( c(0.3), each=6), rep(c(0.4), each=6), rep(c(0.5), each=6), rep(c(0.6), each=6))
+    lambda.vec <- rep( c(50), 30)
+
+
+    Comp_1000_100 <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
+        unitcomp_large(sc)
+
+    stopCluster(cl)
+    print(Sys.time())
+
+Comp_1000 <- cbind(K.vec, Beta.vec, Comp_1000_100)
+write.table(Comp_1000_100, "Comp_1000_100_Beta.csv", sep=",")
 
 
