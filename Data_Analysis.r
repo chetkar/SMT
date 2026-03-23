@@ -291,26 +291,25 @@ alpha <- 0.05
 #kappa = threshold
 #apha = 0.05
 
-search_grid <- function(data){
+search_grid <- function(data, start.loglik=-10^20){
 
-
-
-### Compute standard deviation
-sd.row <- apply(data_gf, 1, sd)	
-
+obj       <- list()
 delta.vec <- c(0.1, 0.15,0.2, 0.25, 0.3)
 gamma.vec <- c(0, 0.25, 0.5, 0.75)
 beta.vec  <- c(5000, 10000, 20000)
 kappa.vec <- c(0.5, 0.65, 0.75 , 0.85, 0.95)
 alpha.vec <- c(0.05)
 
-lik_d <- 10^(-log(nrow(data)))
-	
+lik_d <- start.loglik
+count <- 0	
 for(d in delta.vec){
 	for(gam in gamma.vec){
 		for(bet in beta.vec){
 			for(kappa in kappa.vec){
-
+				
+				llik_max = lik_d	
+				count <- count + 1
+				print( paste("This is", count, "iteration at", date(), llik_max))
 				#Low_High_CellCount
 				sum.col <- apply(data,2,sum)
 				lower   <- quantile(sum.col, delta)
@@ -333,11 +332,29 @@ for(d in delta.vec){
 				obj     <- smt_A(A, K_m =20, alpha)
                 g       <- obj[[1]]
                 K       <- obj[[2]]
-				llik	<- loglik(A, g, K)
+				llik_curr <- llik	<- loglik(A, g, K)
+							   
+				
+				if(llik_max < llik_curr){
+					obj[[1]] <- llik_max = llik_curr
+					obj[[2]] <- A_return = A
+					obj[[3]] <- g_return = g
+					obj[[4]] <- K_return = K
 
-out 
+					obj[[5]] <- delta_return = d
+					obj[[6]] <- gamma_return = gam
+					obj[[7]] <- beta_return  = bet
+					obj[[8]] <- kappa_return = kappa
+				}
+
+			  llik_max = max(llik_max, llik_curr)
+				
+obj
 }
-
+}
+}
+}
+}
 ##############################################################################################
 #tSNE plot
 
