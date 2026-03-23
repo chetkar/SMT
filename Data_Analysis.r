@@ -263,11 +263,39 @@ rm("data_tot")
 data_bplr     <- new_data_tot[,ind]
 counts        <- data_bplr[["RNA"]]$counts
 data          <- as.matrix(counts)
+############################################################################################
+# Generate single cell data
+# using DCSBM
+############################################################################################
+library(splatter)
+library(scater)
+
+gen.data <- function(N, d){
+
+params <- newSplatParams()
+
+params <- setParams(params, list(
+  batchCells = 1000,              # n_cells
+  nGenes = 2000,                  # n_genes
+  group.prob = c(0.4, 0.3, 0.3),  # Block sizes (z)
+  lib.loc = 10,                   # Degree correction mean (theta)
+  lib.scale = 0.5,                # Degree correction variance
+  de.prob = 0.1                   # Probability of marker genes per block
+))
+
+sce <- splatSimulate(params, method = "groups", verbose = FALSE)
+data <- counts(sce)
+
+data
+}
+
 
 
 
 ###############################################################################################
 # Grid Search
+# Computes the optimum grid values for the likelihood function outputs g, K. 
+# We also use this to output ari and K for comparison
 ###############################################################################################
 
 
@@ -291,23 +319,23 @@ alpha <- 0.05
 #kappa = threshold
 #apha = 0.05
 
+
 search_grid <- function(data, start.loglik=-10^20){
 
-obj       <- list()
+out       <- list()
 delta.vec <- c(0.1, 0.15,0.2, 0.25, 0.3)
 gamma.vec <- c(0, 0.25, 0.5, 0.75)
 beta.vec  <- c(5000, 10000, 20000)
 kappa.vec <- c(0.5, 0.65, 0.75 , 0.85, 0.95)
 alpha.vec <- c(0.05)
 
-lik_d <- start.loglik
+llik_max <- lik_d <- start.loglik
 count <- 0	
 for(d in delta.vec){
 	for(gam in gamma.vec){
 		for(bet in beta.vec){
 			for(kappa in kappa.vec){
 				
-				llik_max = lik_d	
 				count <- count + 1
 				print( paste("This is", count, "iteration at", date(), llik_max))
 				#Low_High_CellCount
@@ -335,26 +363,28 @@ for(d in delta.vec){
 				llik_curr <- llik	<- loglik(A, g, K)
 							   
 				
-				if(llik_max < llik_curr){
-					obj[[1]] <- llik_max = llik_curr
-					obj[[2]] <- A_return = A
-					obj[[3]] <- g_return = g
-					obj[[4]] <- K_return = K
+				if(llik_max <= llik_curr){
+					out[[1]] = llik_max = llik_curr
+					out[[2]] = A_return = A
+					out[[3]] = g_return = g
+					out[[4]] = K_return = K
 
-					obj[[5]] <- delta_return = d
-					obj[[6]] <- gamma_return = gam
-					obj[[7]] <- beta_return  = bet
-					obj[[8]] <- kappa_return = kappa
+					out[[5]] = delta_return = d
+					out[[6]] = gamma_return = gam
+					out[[7]] = beta_return  = bet
+					out[[8]] = kappa_return = kappa
+					print(paste("I am in the loop.", llik_max, llik_curr))
 				}
 
 			  llik_max = max(llik_max, llik_curr)
 				
-obj
 }
 }
 }
 }
+out
 }
+
 ##############################################################################################
 #tSNE plot
 
