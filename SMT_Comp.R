@@ -1344,6 +1344,7 @@ write.table(Comp_1000_100, "Comp_1000_100_Beta.csv", sep=",")
 smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, out.prob, alpha=0.05 ){
 	library(splatter)
 	library(scater)
+	library(mclust)
 	
 	obj   <- gen_data_scRNAseq(N, d, ib.status, K, lib.loc, lib.scale, de.prob, out.prob)
 	count <- obj[[1]]
@@ -1353,13 +1354,21 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
     A     <- out[[2]]
 
 	a.out  <- unlist(BHMC.estimate(A, K_m)$K)[1]
+	g      <- rep(1, nrow(A) )
+	if(g > 1){
 	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
+	}
 	ARI.a  <- adjustedRandIndex(g.orig, g)
-
+	
+	
     B      <- Matrix(A, sparse = TRUE)
     f.out  <- unlist(eigcv(B, k_max=K_m)[1])
-    g      <- pl_est_com(A, K=a.out, max.iter=100)$class
-    ARI.f  <- adjustedRandIndex(g.orig, g)
+    g      <- rep(1, nrow(A) )
+	
+	if(g > 1){
+	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
+    }
+	ARI.f  <- adjustedRandIndex(g.orig, g)
 	
 	ans   <- smt_A(A)
 	s.out <- ans[[2]]
