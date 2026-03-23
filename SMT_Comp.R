@@ -269,47 +269,31 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
     B         <- 1 - A
     diag(B)   <- rep(0, nrow(A))
 
-  #seq.vec  <- seq(35, 5, -5)
-
 	for(k in 1:K_m){
+	
+		if(k ==1){
+      		g <- rep(1, nrow(A))
+   		}else{
+			if(method=="1"){
+		  		out    <- pl_est_com(A, K=k, max.iter=1000)
+		  		g      <- out$class
+      		}else{
+				out     <- reg.SP(A, K=k)
+        		g       <- out$cluster
+      		}
+    	 }
 
-   if(k ==1){
-      g <- rep(1, nrow(A))
-   }else{
-
-
-    if(method=="1"){
-		  out    <- pl_est_com(A, K=k, max.iter=1000)
-		  g      <- out$class
-
-      }else{
-
-        out     <- reg.SP(A, K=k)
-        g       <- out$cluster
-      }
-
-    }
-
-    if( sum(table(g) <= 10) > 0 | length(table(g)) < k ){
-      upper_indx      <- 10*k
-      g[1:upper_indx] <- rep(seq(1,k, 1),10)
-    }
-
-
-    out     <- reg.SP(A, K=k)
-    g       <- out$cluster
-
-      #out    <- pl_est_com(A, K=k, max.iter=1000)
-      #g      <- out$class
+    	if( sum(table(g) <= 10) > 0 | length(table(g)) < k ){
+      		upper_indx      <- 10*k
+      		g[1:upper_indx] <- rep(seq(1,k, 1),10)
+    	}
 
       B.est <- matrix(0, k, k)
       B.est  <- get.Best(A,g)
 
-  		B.est  <- get.Best(A,g)
       B.est[which(B.est<0.1)]=0.1
       B.est[which(B.est > 0.9)]=0.9
       tvec      <- rep(0, k)
-
 
   		for(l in 1:k){
 
@@ -317,32 +301,23 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
   			n         <- length(ind)
   			P.tmp     <- B.est[l,l]
 
-        if(P.tmp <= 0.5 ){
+	        if(P.tmp <= 0.5 ){
 
-              Tmp       <- A[ind, ind]/( sqrt( (n)* P.tmp*(1- P.tmp) ))
+    	          Tmp       <- A[ind, ind]/( sqrt( (n)* P.tmp*(1- P.tmp) ))
   			      diag(Tmp) <- rep(0, n)
-
-  			      mu        <- n*sum(A[ind,ind])/(n*(n-1))
-              t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-
-
-
+				  mu        <- n*sum(A[ind,ind])/(n*(n-1))
+                  t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu), 0)
            }else{
 
-              Tmp       <- (B[ind, ind])/( sqrt( (n)* P.tmp*(1- P.tmp) ))
+              	  Tmp       <- (B[ind, ind])/( sqrt( (n)* P.tmp*(1- P.tmp) ))
   			      diag(Tmp) <- rep(0,n)
-
-  			      mu        <- n*sum(B[ind,ind])/(n*(n-1))
-              t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu))
-
+				   mu        <- n*sum(B[ind,ind])/(n*(n-1))
+                   t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu), 0)
   		  }
-
-      tvec[l]   <- t1
+      		tvec[l]   <- t1
       }
-
-  		test.stat     <- max( tvec )
-
-
+  		
+		test.stat     <- max( tvec )
     if(!is.na(test.stat)){
 
       if( test.stat <= qtw(1-alpha/(k)) & update.g == TRUE ){
