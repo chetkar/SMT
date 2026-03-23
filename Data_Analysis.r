@@ -270,17 +270,30 @@ data          <- as.matrix(counts)
 library(splatter)
 library(scater)
 
-gen.data <- function(N, d){
+gen_data_scRNAseq <- function(N, d, ib.status, K, lib.loc, lib.scale, de.prob, out.prob){
 
 params <- newSplatParams()
 
 params <- setParams(params, list(
-  batchCells = 1000,              # n_cells
-  nGenes = 2000,                  # n_genes
-  group.prob = c(0.4, 0.3, 0.3),  # Block sizes (z)
-  lib.loc = 10,                   # Degree correction mean (theta)
-  lib.scale = 0.5,                # Degree correction variance
-  de.prob = 0.1                   # Probability of marker genes per block
+  batchCells = N,              # n_cells
+  nGenes    = d,                  # n_genes
+
+ if(ib.status == "ib1"){
+	 group.prob = c(2/K, rep(1/K, K-1)),  # Block sizes (z)
+	 group.prob = group.prob/sum(group.prob)
+	 
+  }else if (ib.status == "ib2"){
+	 group.prob = c(2/K, 1/K, rep(1/(2*K), K-2)),  # Block sizes (z)
+	 group.prob = group.prob/sum(group.prob)
+
+	 }else{
+		group.prob = rep(1/K, K)
+   }
+	
+  lib.loc = lib.loc,                   # Degree correction mean (theta)
+  lib.scale = lib.scale,                # Degree correction variance
+  de.prob = de.prob                   # Probability of marker genes per block
+  out.prob = de.prob/2	
 ))
 
 sce <- splatSimulate(params, method = "groups", verbose = FALSE)
