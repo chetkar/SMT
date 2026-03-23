@@ -1350,7 +1350,7 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
 	count <- obj[[1]]
 	g.orig<- obj[[2]] 
 	
-	out	  <- search_grid(count)
+	out	  <- search_grid(obj)
     A     <- out[[2]]
 
 	a.out  <- unlist(BHMC.estimate(A, K_m)$K)[1]
