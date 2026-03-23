@@ -1342,6 +1342,8 @@ write.table(Comp_1000_100, "Comp_1000_100_Beta.csv", sep=",")
 
 
 smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, out.prob, alpha=0.05 ){
+	library(splatter)
+	library(scater)
 	
 	obj   <- gen_data_scRNAseq(N, d, ib.status, K, lib.loc, lib.scale, de.prob, out.prob)
 	count <- obj[[1]]
@@ -1446,7 +1448,7 @@ out
 	
 
     Comp_scRNAseq <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
-        unitcomp_large(sc)
+        unitcomp_scRNAseq(sc)
 
     stopCluster(cl)
     print(Sys.time())
