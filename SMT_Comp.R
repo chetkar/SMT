@@ -271,7 +271,7 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
 
   #seq.vec  <- seq(35, 5, -5)
 
-	for(k in 10:K_m){
+	for(k in 1:K_m){
 
    if(k ==1){
       g <- rep(1, nrow(A))
