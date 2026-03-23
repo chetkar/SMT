@@ -271,13 +271,6 @@ data          <- as.matrix(counts)
 ###############################################################################################
 
 
-delta.vec <- c(0.1, 0.15,0.2, 0.25, 0.3)
-gamma.vec <- c(2000, 4000, 6000)
-beta.vec  <- c(5000, 10000, 20000)
-kappa.vec <- c(0.5, 0.65, 0.75 , 0.85, 0.95)
-alpha.vec <- c(0.05, 0.1)
-
-
 #For simplicity, we do the grid search manually
 #It can be easily automated
 #The default value is (0)
@@ -291,35 +284,59 @@ alpha <- 0.05
 # Get A
 ############################
 
-#Low_High_CellCount
-sum.col <- apply(data,2,sum)
-lower   <- quantile(sum.col, delta)
-upper   <- quantile(sum.col, 1-delta)
+#Does a default grid search
+#delta = used for trimming corruption
+#gamma = used for selecting highly differentiable genes
+#signal strength = large signal strength is better for noisy data
+#kappa = threshold
+#apha = 0.05
 
-#Multiple_Filters
-ind.col  <- which( sum.col > lower & sum.col < upper)
-data_gf  <- data[, ind.col]
+search_grid <- function(data){
+
 
 
 ### Compute standard deviation
-sd.row <- apply(data_gf, 1, sd)
+sd.row <- apply(data_gf, 1, sd)	
 
-#Filtering
-#Top 2000 genes
-#Roughly 11 percent
-ind.row <- which(sd.row > gamma)
+delta.vec <- c(0.1, 0.15,0.2, 0.25, 0.3)
+gamma.vec <- c(0, 0.25, 0.5, 0.75)
+beta.vec  <- c(5000, 10000, 20000)
+kappa.vec <- c(0.5, 0.65, 0.75 , 0.85, 0.95)
+alpha.vec <- c(0.05)
 
+lik_d <- 10^(-log(nrow(data)))
+	
+for(d in delta.vec){
+	for(gam in gamma.vec){
+		for(bet in beta.vec){
+			for(kappa in kappa.vec){
 
-sd.row  <- apply(data_gf, 1, sd)
-ind.ref <- which(sd.row > 0.1)
-data_gf <- data_gf[ind.ref, ]
+				#Low_High_CellCount
+				sum.col <- apply(data,2,sum)
+				lower   <- quantile(sum.col, delta)
+				upper   <- quantile(sum.col, 1-delta)
 
-data_f  <- log(1 + beta*data_gf/rowSums(data_gf))/log(2)
-cor     <- cor(as.matrix(data_f))
+				#Multiple_Filters
+				ind.col  <- which( sum.col > lower & sum.col < upper)
+				data_gf  <- data[, ind.col]
+				
+				#Filtering
+				ind.row <- which(sd.row > quantile(gamma.vec, gam))
+				sd.row  <- apply(data_gf, 1, sd)
+				ind.ref <- which(sd.row > 0.1)
+				data_gf <- data_gf[ind.ref, ]
 
-A       <- est.comm(cor, kappa)
-K       <- smt_A(A, alpha)
+				data_f  <- log(1 + beta*data_gf/rowSums(data_gf))/log(2)
+				cor     <- cor(as.matrix(data_f))
 
+				A       <- est.comm(cor, kappa)
+				obj     <- smt_A(A, K_m =20, alpha)
+                g       <- obj[[1]]
+                K       <- obj[[2]]
+				llik	<- loglik(A, g, K)
+
+out 
+}
 
 ##############################################################################################
 #tSNE plot
