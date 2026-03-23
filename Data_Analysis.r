@@ -287,6 +287,8 @@ if(ib.status == "ib1"){
 		group.prob = rep(1/K, K)
    }
 
+params <- newSplatParams()
+	
 params <- setParams(params, list(
   batchCells = N,             
   nGenes    = d,                
@@ -336,8 +338,11 @@ alpha <- 0.05
 #apha = 0.05
 
 
-search_grid <- function(data, start.loglik=-10^20){
+search_grid <- function(data.obj, start.loglik=-10^20){
 
+data     <- data.obj[[1]]
+g.orig   <- data.obj[[2]]
+	
 out       <- list()
 delta.vec <- c(0.1, 0.15,0.2, 0.25, 0.3)
 gamma.vec <- c(0, 0.25, 0.5, 0.75)
@@ -382,7 +387,7 @@ for(d in delta.vec){
 				if(llik_max <= llik_curr){
 					out[[1]] = llik_max = llik_curr
 					out[[2]] = A_return = A
-					out[[3]] = g_return = g
+					out[[3]] = g.orig[ind.row]
 					out[[4]] = K_return = K
 
 					out[[5]] = delta_return = d
