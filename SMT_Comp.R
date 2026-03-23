@@ -1336,4 +1336,123 @@ write.table(Power, "Power_new.csv", sep=",")
 Comp_1000 <- cbind(K.vec, Beta.vec, Comp_1000_100)
 write.table(Comp_1000_100, "Comp_1000_100_Beta.csv", sep=",")
 
+######################################################################################
+# Comparing performance on the three competing methods: Clustering Accuracy and ARI
+#####################################################################################
+
+
+smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, out.prob, alpha=0.05 ){
+	
+	obj   <- gen_data_scRNAseq(N, d, ib.status, K, lib.loc, lib.scale, de.prob, out.prob)
+	count <- obj[[1]]
+	g.orig<- obj[[2]] 
+	
+	out	  <- search_grid(count)
+    A     <- out[[2]]
+
+	a.out  <- unlist(BHMC.estimate(A, K_m)$K)[1]
+	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
+	ARI.a  <- adjustedRandIndex(g.orig, g)
+
+    B      <- Matrix(A, sparse = TRUE)
+    f.out  <- unlist(eigcv(B, k_max=K_m)[1])
+    g      <- pl_est_com(A, K=a.out, max.iter=100)$class
+    ARI.f  <- adjustedRandIndex(g.orig, g)
+	
+	ans   <- smt_A(A)
+	s.out <- ans[[2]]
+	g     <- ans[[1]]
+	ARI.s <- adjustedRandIndex(g.orig, g)
+
+	out.g   <- c(a.out, f.out, s.out)
+	out.ARI <- c(ARI.a, ARI.f, ARI.s)
+
+	output <- c(out.g, out.ARI)
+
+output
+}
+
+
+unitcomp_scRNAseq <- function(sc){
+
+library(mclust)
+library(splatter)
+library(scater)
+library(Matrix)
+library(multiviewtest)
+library(randnet)
+library(RMTstat)
+
+library(RSpectra)
+library(randnet)
+library(RMTstat)
+library(multiviewtest)
+library(irlba)
+library(gdim)
+
+
+
+		N     <- N.vec[sc]
+		d     <- d.vec[sc]
+			
+	    ib.status     <- ib.status.vec[sc]
+		K     <- K.vec[sc]
+		K_m   <- K_m.vec[sc]
+
+		lib.loc    <- lib.loc.vec[sc]
+	    lib.scale  <- lib.scale.vec[sc]
+	    de.prob    <- de.prob.vec[sc]
+		out.prob   <- de.prob.vec[sc]/2
+	
+		alpha      <- 0.05
+		m          <- 100
+		k_rep      <- rep(K,m)
+
+
+		out     <- sapply(k_rep, smt_scRNAseq, N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, out.prob, alpha)
+		out1    <- out[1:3]
+		out2    <- out[4:6]
+	
+		ans1     <- apply(out1, 1, prop.fn, K)
+		ans2     <- apply(out2, 1, mean)
+
+out
+}
+
+################################################
+    library(foreach)
+    library(doParallel)
+    no_cores <- 15
+    cl       <- makeCluster(no_cores)
+    registerDoParallel(cl)
+
+    library(RMTstat)
+    library(randnet)
+    library(kernlab)
+    library(multiviewtest)
+    #library(rARPACK)
+
+
+		N.vec     <- rep(1000, each=12 )
+		d.vec     <-  rep(2000, each = 12)
+			
+	    ib.status.vec   <- rep(c("ib1", "ib2"), 6)
+		K.vec           <- rep(c(3, 4, 5), each =4)
+		K_m.vec         <- rep(10, each =12)
+
+		lib.loc.vec    <- rep(10, each =12)
+	    lib.scale.vec  <- rep(0.8, each=12)
+	    de.prob.vec    <- rep(c(0.1, 0.1, 0.2, 0.2), 3)
+	
+
+    Comp_scRNAseq <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
+        unitcomp_large(sc)
+
+    stopCluster(cl)
+    print(Sys.time())
+
+
+write.table(Comp_scRNAseq, "Comp_scRNA_seq_data.csv", sep=",")
+
+
 
