@@ -272,6 +272,9 @@ library(scater)
 
 gen_data_scRNAseq <- function(N, d, ib.status, K, lib.loc, lib.scale, de.prob, out.prob){
 
+library(splatter)
+library(scater)
+	
 if(ib.status == "ib1"){
 	 group.prob = c(2/K, rep(1/K, K-1))  
 	 group.prob = group.prob/sum(group.prob)
