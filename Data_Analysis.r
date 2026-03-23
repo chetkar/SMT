@@ -264,7 +264,7 @@ data_bplr     <- new_data_tot[,ind]
 counts        <- data_bplr[["RNA"]]$counts
 data          <- as.matrix(counts)
 ############################################################################################
-# Generate single cell data
+# Generate single cell data using Splatter
 # using DCSBM
 ############################################################################################
 library(splatter)
@@ -272,34 +272,34 @@ library(scater)
 
 gen_data_scRNAseq <- function(N, d, ib.status, K, lib.loc, lib.scale, de.prob, out.prob){
 
-params <- newSplatParams()
-
-params <- setParams(params, list(
-  batchCells = N,              # n_cells
-  nGenes    = d,                  # n_genes
-
- if(ib.status == "ib1"){
-	 group.prob = c(2/K, rep(1/K, K-1)),  # Block sizes (z)
+if(ib.status == "ib1"){
+	 group.prob = c(2/K, rep(1/K, K-1))  
 	 group.prob = group.prob/sum(group.prob)
 	 
   }else if (ib.status == "ib2"){
-	 group.prob = c(2/K, 1/K, rep(1/(2*K), K-2)),  # Block sizes (z)
+	 group.prob = c(2/K, 1/K, rep(1/(2*K), K-2))  
 	 group.prob = group.prob/sum(group.prob)
 
 	 }else{
 		group.prob = rep(1/K, K)
    }
-	
+
+params <- setParams(params, list(
+  batchCells = N,             
+  nGenes    = d,                
+  group.prob= group.prob,
   lib.loc = lib.loc,                   # Degree correction mean (theta)
   lib.scale = lib.scale,                # Degree correction variance
-  de.prob = de.prob                   # Probability of marker genes per block
-  out.prob = de.prob/2	
+  de.prob = de.prob,                   # Probability of marker genes per block
+  out.prob = out.prob
 ))
 
 sce <- splatSimulate(params, method = "groups", verbose = FALSE)
-data <- counts(sce)
-
-data
+out <- list()
+out[[1]] <- data <- counts(sce)
+out[[2]] <- as.numeric(factor(sce$Group))
+	
+out
 }
 
 
@@ -397,6 +397,9 @@ for(d in delta.vec){
 }
 out
 }
+
+
+
 
 ##############################################################################################
 #tSNE plot
