@@ -350,7 +350,7 @@ for(d in delta.vec){
 			for(kappa in kappa.vec){
 				
 				count <- count + 1
-				print( paste("This is", count, "iteration at", date(), llik_max))
+				#print( paste("This is", count, "iteration at", date(), llik_max))
 				#Low_High_CellCount
 				sum.col <- apply(data,2,sum)
 				lower   <- quantile(sum.col, delta)
@@ -386,7 +386,7 @@ for(d in delta.vec){
 					out[[6]] = gamma_return = gam
 					out[[7]] = beta_return  = bet
 					out[[8]] = kappa_return = kappa
-					print(paste("I am in the loop.", llik_max, llik_curr))
+					#print(paste("I am in the loop.", llik_max, llik_curr))
 				}
 
 			  llik_max = max(llik_max, llik_curr)
