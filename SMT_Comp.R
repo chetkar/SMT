@@ -306,13 +306,13 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
     	          Tmp       <- A[ind, ind]/( sqrt( (n)* P.tmp*(1- P.tmp) ))
   			      diag(Tmp) <- rep(0, n)
 				  mu        <- n*sum(A[ind,ind])/(n*(n-1))
-                  t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu), 0)
+                  t1        <- n^(2/3)*(eigen(Tmp)$values[2] - 2 - 1/(mu))
            }else{
 
               	  Tmp       <- (B[ind, ind])/( sqrt( (n)* P.tmp*(1- P.tmp) ))
   			      diag(Tmp) <- rep(0,n)
 				   mu        <- n*sum(B[ind,ind])/(n*(n-1))
-                   t1        <- n^(2/3)*max(eigen(Tmp)$values[2] - 2 - 1/(mu), 0)
+                   t1        <- n^(2/3)*(eigen(Tmp)$values[2] - 2 - 1/(mu))
   		  }
       		tvec[l]   <- t1
       }
