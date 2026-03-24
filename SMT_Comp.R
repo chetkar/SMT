@@ -1371,7 +1371,7 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
     }
 	ARI.f  <- adjustedRandIndex(g.orig, g)
 	
-	ans   <- smt_A(A)
+	ans   <- smt_A(A, K_m =20)
 	s.out <- ans[[2]]
 	g     <- ans[[1]]
 	ARI.s <- adjustedRandIndex(g.orig, g)
@@ -1379,7 +1379,9 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
 	out.g   <- c(a.out, f.out, s.out)
 	out.ARI <- c(ARI.a, ARI.f, ARI.s)
 
-	output <- c(out.g, out.ARI)
+	output <- list()
+	output[[1]] <- out.g
+	output[[2]] <- out.ARI
 
 output
 }
@@ -1422,8 +1424,8 @@ library(gdim)
 
 
 		out     <- sapply(k_rep, smt_scRNAseq, N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, out.prob, alpha)
-		out1    <- out[1:3]
-		out2    <- out[4:6]
+		out1    <- out[[1]]
+		out2    <- out[[2]]]
 	
 		ans1     <- apply(out1, 1, prop.fn, K)
 		ans2     <- apply(out2, 1, mean)
