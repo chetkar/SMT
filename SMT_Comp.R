@@ -1348,14 +1348,15 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
 	
 	obj   <- gen_data_scRNAseq(N, d, ib.status, K, lib.loc, lib.scale, de.prob, out.prob)
 	count <- obj[[1]]
-	g.orig<- obj[[2]] 
+ 
 	
 	out	  <- search_grid(obj)
     A     <- out[[2]]
+	g.orig<- out[[3]]
 
 	a.out  <- unlist(BHMC.estimate(A, K_m)$K)[1]
 	g      <- rep(1, nrow(A) )
-	if(g > 1){
+	if(a.out > 1){
 	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
 	}
 	ARI.a  <- adjustedRandIndex(g.orig, g)
@@ -1365,7 +1366,7 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
     f.out  <- unlist(eigcv(B, k_max=K_m)[1])
     g      <- rep(1, nrow(A) )
 	
-	if(g > 1){
+	if(f.out > 1){
 	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
     }
 	ARI.f  <- adjustedRandIndex(g.orig, g)
