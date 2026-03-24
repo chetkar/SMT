@@ -387,7 +387,7 @@ for(d in delta.vec){
 				if(llik_max <= llik_curr){
 					out[[1]] = llik_max = llik_curr
 					out[[2]] = A_return = A
-					out[[3]] = g.orig[ind.row]
+					out[[3]] = g.orig[ind.col]
 					out[[4]] = K_return = K
 
 					out[[5]] = delta_return = d
