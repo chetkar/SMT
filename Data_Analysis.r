@@ -270,7 +270,7 @@ data          <- as.matrix(counts)
 library(splatter)
 library(scater)
 
-gen_data_scRNAseq <- function(N, d, ib.status, K, lib.loc, lib.scale, de.prob, out.prob){
+gen_data_scRNAseq <- function(N, dd, ib.status, K, lib.loc, lib.scale, de.prob, out.prob){
 
 library(splatter)
 library(scater)
@@ -291,7 +291,7 @@ params <- newSplatParams()
 	
 params <- setParams(params, list(
   batchCells = N,             
-  nGenes    = d,                
+  nGenes    = dd,                
   group.prob= group.prob,
   lib.loc = lib.loc,                   # Degree correction mean (theta)
   lib.scale = lib.scale,                # Degree correction variance
@@ -361,21 +361,23 @@ for(d in delta.vec){
 				#print( paste("This is", count, "iteration at", date(), llik_max))
 				#Low_High_CellCount
 				sum.col <- apply(data,2,sum)
-				lower   <- quantile(sum.col, delta)
-				upper   <- quantile(sum.col, 1-delta)
+				lower   <- quantile(sum.col, d)
+				upper   <- quantile(sum.col, 1-d)
 
 				#Multiple_Filters
 				ind.col  <- which( sum.col > lower & sum.col < upper)
 				data_gf  <- data[, ind.col]
 				
 				#Filtering
-				ind.row <- which(sd.row > quantile(gamma.vec, gam))
 				sd.row  <- apply(data_gf, 1, sd)
+				ind.row <- which(sd.row > quantile(gamma.vec, gam))
 				ind.ref <- which(sd.row > 0.1)
 				data_gf <- data_gf[ind.ref, ]
 
-				data_f  <- log(1 + beta*data_gf/rowSums(data_gf))/log(2)
+				data_f  <- log(1 + bet*data_gf/rowSums(data_gf))/log(2)
 				cor     <- cor(as.matrix(data_f))
+				rm(data_gf)
+				rm(data_f)
 
 				A       <- est.comm(cor, kappa)
 				obj     <- smt_A(A, K_m =20, alpha)
