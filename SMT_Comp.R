@@ -291,8 +291,8 @@ smt_A <- function(A, K_m, method="1",alpha=0.05){
       B.est <- matrix(0, k, k)
       B.est  <- get.Best(A,g)
 
-      B.est[which(B.est<0.1)]=0.1
-      B.est[which(B.est > 0.9)]=0.9
+      B.est[which(B.est<0.05)]=0.05
+      B.est[which(B.est > 0.95)]=0.95
       tvec      <- rep(0, k)
 
   		for(l in 1:k){
@@ -1357,7 +1357,7 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
 	a.out  <- unlist(BHMC.estimate(A, K_m)$K)[1]
 	g      <- rep(1, nrow(A) )
 	if(a.out > 1){
-	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
+	g      <- pl_est_com(A, K=a.out, max.iter=1000)$class
 	}
 	ARI.a  <- adjustedRandIndex(g.orig, g)
 	
@@ -1367,7 +1367,7 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
     g      <- rep(1, nrow(A) )
 	
 	if(f.out > 1){
-	g      <- pl_est_com(A, K=f.out, max.iter=100)$class
+	g      <- pl_est_com(A, K=f.out, max.iter=1000)$class
     }
 	ARI.f  <- adjustedRandIndex(g.orig, g)
 	
