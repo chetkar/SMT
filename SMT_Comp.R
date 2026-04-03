@@ -1367,7 +1367,7 @@ smt_scRNAseq <- function(K,N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, ou
     g      <- rep(1, nrow(A) )
 	
 	if(f.out > 1){
-	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
+	g      <- pl_est_com(A, K=f.out, max.iter=100)$class
     }
 	ARI.f  <- adjustedRandIndex(g.orig, g)
 	
