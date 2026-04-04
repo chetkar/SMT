@@ -1422,12 +1422,14 @@ library(gdim)
 
 
 		out     <- sapply(k_rep, smt_scRNAseq, N, d, ib.status, K_m, lib.loc, lib.scale, de.prob, out.prob, alpha)
-		out1    <- out[, 1:3]
-		out2    <- out[, 4:6]
+		out1    <- out[1:3,]
+		out2    <- out[4:6,]
 	
 		ans1     <- apply(out1, 1, prop.fn, K)
 		ans2     <- apply(out2, 1, mean)
-	    ans      <- c(ans1, ans2)
+		ans3     <- apply(out2, 1, median)
+	    
+		ans      <- c(ans1, ans2, ans3)
 
 ans
 }
