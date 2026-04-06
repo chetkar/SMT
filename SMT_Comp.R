@@ -1457,7 +1457,7 @@ ans
 
 		lib.loc.vec    <- rep(10, each =12)
 	    lib.scale.vec  <- rep(0.8, each=12)
-	    de.prob.vec    <- rep(c(0.1, 0.1, 0.2, 0.2), 3)
+	    de.prob.vec    <- rep(c(0.3, 0.3, 0.4, 0.4), 3)
 	
 
     Comp_scRNAseq <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
@@ -1467,7 +1467,43 @@ ans
     print(Sys.time())
 
 
-write.table(Comp_scRNAseq, "Comp_scRNA_seq_data.csv", sep=",")
+write.table(Comp_scRNAseq, "Comp_scRNA_seq_data_34.csv", sep=",")
+
+
+
+    library(foreach)
+    library(doParallel)
+    no_cores <- 15
+    cl       <- makeCluster(no_cores)
+    registerDoParallel(cl)
+
+    library(RMTstat)
+    library(randnet)
+    library(kernlab)
+    library(multiviewtest)
+    #library(rARPACK)
+
+
+		N.vec     <- rep(10000, each=18 )
+		d.vec     <-  rep(2000, each = 18)
+			
+	    ib.status.vec   <- rep(c("ib1", "ib2", "ibr"), 6)
+		K.vec           <- rep(c(10, 13, 16), each =6)
+		K_m.vec         <- rep(20, each =18)
+
+		lib.loc.vec    <- rep(10, each =18)
+	    lib.scale.vec  <- rep(0.8, each=18)
+	    de.prob.vec    <- rep(c(0.2, 0.2, 0.2, 0.4, 0.4, 0.4), 3)
+	
+
+    Comp_scRNAseq <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
+        unitcomp_scRNAseq(sc)
+
+    stopCluster(cl)
+    print(Sys.time())
+
+
+write.table(Comp_scRNAseq, "Comp_scRNA_seq_data_34.csv", sep=",")
 
 
 
