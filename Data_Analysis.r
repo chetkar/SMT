@@ -283,6 +283,10 @@ if(ib.status == "ib1"){
 	 group.prob = c(2/K, 1/K, rep(1/(2*K), K-2))  
 	 group.prob = group.prob/sum(group.prob)
 
+	 }else if(ib.status =="ibr"){
+	 group.prob = c(.05*(K-1)/K, rep(1/K, K-1))  
+	 group.prob = group.prob/sum(group.prob)
+	
 	 }else{
 		group.prob = rep(1/K, K)
    }
