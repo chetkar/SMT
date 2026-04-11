@@ -359,6 +359,7 @@ smt_large <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
 		group.prob = rep(1/K, K)
    }
 
+	rho = group.prob
 	obj <- gen.sbm(rho, B, N, K)
 
 	#obj  <- BlockModel.Gen(lambda=lambda, beta=Beta, n = N, K = K)
