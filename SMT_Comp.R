@@ -343,9 +343,27 @@ out
 ###########################################
 smt_large <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
 
-	obj  <- BlockModel.Gen(lambda=lambda, beta=Beta, n = N, K = K)
-	A    <- obj$A
-	g.orig <- obj$g
+	if(ib.status == "ib1"){
+	 group.prob = c(2/K, rep(1/K, K-1))  
+	 group.prob = group.prob/sum(group.prob)
+	 
+  }else if (ib.status == "ib2"){
+	 group.prob = c(2/K, 1/K, rep(1/(2*K), K-2))  
+	 group.prob = group.prob/sum(group.prob)
+
+	 }else if(ib.status =="ibr"){
+	 group.prob = c(.05*(K-1)/K, rep(1/K, K-1))  
+	 group.prob = group.prob/sum(group.prob)
+	
+	 }else{
+		group.prob = rep(1/K, K)
+   }
+
+	obj <- gen.sbm(rho, B, N, K)
+
+	#obj  <- BlockModel.Gen(lambda=lambda, beta=Beta, n = N, K = K)
+	A    <- obj[[1]]
+	g.orig <- obj[[3]]
 
 	a.out  <- unlist(BHMC.estimate(A, K_m)$K)[1]
 	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
