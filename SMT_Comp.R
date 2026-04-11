@@ -341,7 +341,7 @@ out
 ########################################
 #Running Large Experiments here
 ###########################################
-smt_large <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
+smt_large <- function(K, p, q, N, K_m, alpha=0.05, ib.status, scale.fac=1.05){
 
 	if(ib.status == "ib1"){
 	 group.prob = c(2/K, rep(1/K, K-1))  
@@ -360,6 +360,9 @@ smt_large <- function(K, lambda, Beta, N, K_m, alpha=0.05, scale.fac=1.05){
    }
 
 	rho = group.prob
+	B   = matrix(q, K, K)
+	diag(B) <- rep(p-q, K) + diag(B)
+	
 	obj <- gen.sbm(rho, B, N, K)
 
 	#obj  <- BlockModel.Gen(lambda=lambda, beta=Beta, n = N, K = K)
@@ -1013,17 +1016,20 @@ library(randnet)
 library(RMTstat)
 library(RSpectra)
 
-		lambda    <- lambda.vec[sc]
+		#lambda    <- lambda.vec[sc]
 		N         <- N.vec[sc]
 		K         <- K.vec[sc]
 		K_m       <- K_m.vec[sc]
-		Beta      <- Beta.vec[sc]
+		ib.status <- ib.status.vec[sc]
+		#Beta      <- Beta.vec[sc]
+	    p          <- p.vec[sc]
+	    q          <- p/2
 
 		alpha      <- 0.05
 		m          <- 100
 		k_rep      <- rep(K,m)
 
-		out     <- sapply(k_rep, smt_only, lambda, Beta, N = N, K_m = K_m, alpha)
+		out     <- sapply(k_rep, smt_large, p, q, N = N, K_m = K_m, alpha, ib.status)
 
 out
 }
