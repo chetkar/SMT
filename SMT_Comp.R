@@ -473,9 +473,8 @@ smt_large <- function(K, p, q, N, K_m, alpha=0.05, ib.status, scale.fac=1.05){
 	out.s   <- unlist(res)[1]
 	ARI.s  <- adjustedRandIndex(g.orig, g)
 	
-	ans   <- list()
-	ans$K <- c(a.out, f.out, out.s)
-	ans$ARI <- c(ARI.a, ARI.f, ARI.s)
+	ans <- c(a.out, f.out, out.s)
+	ans <- c(ans,ARI.a, ARI.f, ARI.s)
 
 ans
 }
@@ -1010,11 +1009,30 @@ out
 
 unitcomp_large <- function(sc){
 
+library(mclust)
 library(Matrix)
 library(multiviewtest)
 library(randnet)
+#library(fastRG)
+#install.packages("devtools")
+#install.packages("remotes")
 library(RMTstat)
+library(Rcpp)
+library(RcppArmadillo)
+#library(Rcsdp)
+library(kernlab)
+
 library(RSpectra)
+library(randnet)
+library(RMTstat)
+library(multiviewtest)
+
+library(remotes)
+library(devtools)
+#devtools::install_github("RoheLab/gdim")
+library(gdim)
+library(rARPACK)
+
 
 		#lambda    <- lambda.vec[sc]
 		N         <- N.vec[sc]
@@ -1030,10 +1048,81 @@ library(RSpectra)
 		k_rep      <- rep(K,m)
 
 		out     <- sapply(k_rep, smt_large, p, q, N = N, K_m = K_m, alpha, ib.status)
+		out1    <- out[1:3,]
+		out2    <- out[4:6,]
+	
+		ans1     <- apply(out1, 1, prop.fn, K)
+		ans2     <- apply(out2, 1, mean)
+
+		out     <- c(ans1, ans2)
 
 out
 }
 
+    library(foreach)
+    library(doParallel)
+    no_cores <- 15
+    cl       <- makeCluster(no_cores)
+    registerDoParallel(cl)
+
+    library(RMTstat)
+    library(randnet)
+    library(kernlab)
+    library(multiviewtest)
+    #library(rARPACK)
+
+
+		N.vec     <- rep(1000, each=18 )
+		d.vec     <-  rep(1000, each = 18)
+			
+	    ib.status.vec   <- rep(c("ib1", "ib2", "ibr"), 6)
+		K.vec           <- rep(c(3, 5, 7), each =6)
+		K_m.vec         <- rep(10, each =18)
+
+	    p.vec           <- rep(c(0.1, 0.1, 0.1, 0.2, 0.2, 0.2), 3)
+	
+
+    Comp_unb <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
+        unitcomp_large(sc)
+
+	Comp_unb <- cbind(N.vec, d.vec, ib.status.vec, K.vec, p.vec, Comp_unb)
+    stopCluster(cl)
+    print(Sys.time())
+
+	write.table(Comp_unb, "Comp_unb_odd.csv", sep=",")
+    
+	library(foreach)
+    library(doParallel)
+    no_cores <- 15
+    cl       <- makeCluster(no_cores)
+    registerDoParallel(cl)
+
+    library(RMTstat)
+    library(randnet)
+    library(kernlab)
+    library(multiviewtest)
+    #library(rARPACK)
+
+
+		N.vec     <- rep(1000, each=18 )
+		d.vec     <-  rep(1000, each = 18)
+			
+	    ib.status.vec   <- rep(c("ib1", "ib2", "ibr"), 6)
+		K.vec           <- rep(c(4, 6, 8), each =6)
+		K_m.vec         <- rep(10, each =18)
+
+	    p.vec           <- rep(c(0.1, 0.1, 0.1, 0.2, 0.2, 0.2), 3)
+	
+
+    Comp_unb <- foreach(sc = 1:length(N.vec), .combine = rbind, .errorhandling = 'pass')%dopar%
+        unitcomp_large(sc)
+
+	Comp_unb <- cbind(N.vec, d.vec, ib.status.vec, K.vec, p.vec, Comp_unb)
+    stopCluster(cl)
+    print(Sys.time())
+
+
+write.table(Comp_unb, "Comp_unb_even.csv", sep=",")
 
 unitcomp <- function(sc){
 
