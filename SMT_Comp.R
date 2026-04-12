@@ -370,13 +370,25 @@ smt_large <- function(K, p, q, N, K_m, alpha=0.05, ib.status, scale.fac=1.05){
 	g.orig <- obj[[3]]
 
 	a.out  <- unlist(BHMC.estimate(A, K_m)$K)[1]
+
+	if(a.out > 1){
 	g      <- pl_est_com(A, K=a.out, max.iter=100)$class
 	ARI.a  <- adjustedRandIndex(g.orig, g)
+	}else{
+	g <- rep(1, N)
+	ARI.a  <- adjustedRandIndex(g.orig,g)	
+	}	
+	
+	B      <- Matrix(A, sparse = TRUE)
+    f.out  <- unlist(eigcv(B, k_max=K_m)[1]) 
 
-  B      <- Matrix(A, sparse = TRUE)
-  f.out  <- unlist(eigcv(B, k_max=K_m)[1])
-  g      <- pl_est_com(A, K=a.out, max.iter=100)$class
-  ARI.f  <- adjustedRandIndex(g.orig, g)
+	if(f.out > 1){
+    g      <- pl_est_com(A, K=f.out, max.iter=100)$class
+    ARI.f  <- adjustedRandIndex(g.orig, g)
+	}else{
+	g <- rep(1, N)
+	ARI.f  <- adjustedRandIndex(g.orig,g)	
+	}
   
 	alpha    <- 0.05
 	res      <- 1
@@ -1053,8 +1065,9 @@ library(rARPACK)
 	
 		ans1     <- apply(out1, 1, prop.fn, K)
 		ans2     <- apply(out2, 1, mean)
+	    ans3     <- apply(out3, 1, median)
 
-		out     <- c(ans1, ans2)
+		out     <- c(ans1, ans2, ans3)
 
 out
 }
